@@ -85,14 +85,20 @@ func (d DeferredBatchOp) Finish() error {
 // synchronization.
 //
 // # Indexing
-//
+// 貌似batch可以加个索引了
 // Batches can be optionally indexed (see DB.NewIndexedBatch). An indexed batch
 // allows iteration via an Iterator (see Batch.NewIter). The iterator provides
 // a merged view of the operations in the batch and the underlying
-// database. This is implemented by treating the batch as an additional layer
+// database.
+// 迭代器提供了批处理和底层数据库中操作的合并视图
+// This is implemented by treating the batch as an additional layer
 // in the LSM where every entry in the batch is considered newer than any entry
 // in the underlying database (batch entries have the InternalKeySeqNumBatch
-// bit set). By treating the batch as an additional layer in the LSM, iteration
+// bit set).
+// 这是通过将批处理视为LSM中的附加层来实现的，其中批处理中的每个条目都被认为比底层数据库中的任何
+// 条目都更新(批处理条目设置了InternalKeySeqNumBatch位)。
+//
+// By treating the batch as an additional layer in the LSM, iteration
 // supports all batch operations (i.e. Set, Merge, Delete, DeleteRange,
 // RangeKeySet, RangeKeyUnset, RangeKeyDelete) with minimal effort.
 //
@@ -100,13 +106,15 @@ func (d DeferredBatchOp) Finish() error {
 // latest operation will be visible. For example, Put("a", "b"), Delete("a")
 // will cause the key "a" to not be visible in the batch. Put("a", "b"),
 // Put("a", "c") will cause a read of "a" to return the value "c".
+// 一个batch中的key可以被操作多次，只会显示最新的版本
 //
 // The batch index is implemented via an skiplist (internal/batchskl). While
 // the skiplist implementation is very fast, inserting into an indexed batch is
 // significantly slower than inserting into a non-indexed batch. Only use an
 // indexed batch if you require reading from it.
-//
-// # Atomic commit
+// batch的实现是通过跳表实现的？虽然skiplist实现非常快，但是插入到索引批处理中要比插入到非索引批处理中慢得多。
+// 如果你需要读取，只需要一个batch索引
+// # Atomic commit 原子提交
 //
 // The operations in a batch are persisted by calling Batch.Commit which is
 // equivalent to calling DB.Apply(batch). A batch is committed atomically by
